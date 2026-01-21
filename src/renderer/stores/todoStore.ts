@@ -53,6 +53,35 @@ export function formatDueDate(dueDate: string | null): { text: string; status: '
   }
 }
 
+/**
+ * 格式化建立時間顯示
+ * 今天：「今天」
+ * 昨天：「昨天」
+ * 7 天內：「X 天前」
+ * 超過 7 天：「1/15」
+ */
+export function formatCreatedAt(createdAt: string): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const created = new Date(createdAt);
+  created.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor((today.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return '今天';
+  } else if (diffDays === 1) {
+    return '昨天';
+  } else if (diffDays <= 7) {
+    return `${diffDays} 天前`;
+  } else {
+    const month = created.getMonth() + 1;
+    const day = created.getDate();
+    return `${month}/${day}`;
+  }
+}
+
 export const useTodoStore = defineStore('todo', () => {
   // 狀態
   const categories = ref<Category[]>([]);

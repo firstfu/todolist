@@ -48,9 +48,12 @@
           @keyup.enter="finishEdit"
           @keyup.escape="cancelEdit"
         />
-        <span v-else class="todo-title" :class="{ completed: todo.completed }">
-          {{ todo.title }}
-        </span>
+        <template v-else>
+          <span class="todo-title" :class="{ completed: todo.completed }">
+            {{ todo.title }}
+          </span>
+          <span class="created-at">建立於 {{ createdAtText }}</span>
+        </template>
       </div>
 
       <!-- 到期日顯示 -->
@@ -169,7 +172,7 @@ import {
   CalendarOutline,
   ReorderTwoOutline,
 } from '@vicons/ionicons5';
-import { useTodoStore, formatDueDate } from '../stores/todoStore';
+import { useTodoStore, formatDueDate, formatCreatedAt } from '../stores/todoStore';
 import type { Todo, SubTodo } from '../types/electron';
 
 const props = defineProps<{
@@ -208,6 +211,7 @@ const completedChildrenCount = computed(() =>
   props.todo.children.filter(c => c.completed).length
 );
 const dueDateInfo = computed(() => formatDueDate(props.todo.dueDate));
+const createdAtText = computed(() => formatCreatedAt(props.todo.createdAt));
 
 // 禁用過去的日期（可選）
 function isDateDisabled(timestamp: number) {
@@ -436,6 +440,9 @@ async function addChild() {
 .todo-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .todo-title {
@@ -451,6 +458,12 @@ async function addChild() {
 .todo-title.completed {
   color: var(--text-muted);
   text-decoration: line-through;
+}
+
+.created-at {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
 .edit-input {
