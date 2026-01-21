@@ -563,28 +563,38 @@ async function addChild() {
   border-bottom-left-radius: var(--radius-md);
   border-bottom-right-radius: var(--radius-md);
   padding: var(--spacing-sm);
-  padding-left: calc(var(--spacing-md) + 20px);
+  padding-left: var(--spacing-md);
+  margin-left: 60px;
+  border-left: 2px solid var(--border);
 }
 
 .child-item {
   background-color: transparent;
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
+  opacity: 0.85;
 }
 
 .child-item:hover {
   background-color: var(--bg-elevated);
   box-shadow: none;
+  opacity: 1;
 }
 
 .child-item .checkbox {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border-width: 1.5px;
 }
 
 .child-item .todo-title {
-  font-size: 13px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.child-item .todo-title.completed {
+  color: var(--text-muted);
 }
 
 .child-indent {
@@ -603,10 +613,15 @@ async function addChild() {
   background-color: transparent;
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: 12px;
   outline: none;
   transition: all var(--transition-fast);
+}
+
+.add-child-input::placeholder {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .add-child-input:focus {
