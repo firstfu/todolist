@@ -563,9 +563,7 @@ async function addChild() {
   border-bottom-left-radius: var(--radius-md);
   border-bottom-right-radius: var(--radius-md);
   padding: var(--spacing-sm);
-  padding-left: var(--spacing-md);
-  margin-left: 60px;
-  border-left: 2px solid var(--border);
+  padding-left: 60px;
 }
 
 .child-item {
