@@ -9,18 +9,17 @@
       class="todo-item"
       :class="{
         completed: todo.completed,
-        expanded: isExpanded && hasChildren,
+        expanded: isExpanded,
       }"
     >
-      <!-- 展開/收合按鈕 -->
+      <!-- 展開/收合按鈕（始終顯示，方便新增子任務） -->
       <button
-        v-if="hasChildren"
         class="expand-btn"
+        :class="{ 'has-children': hasChildren }"
         @click="toggleExpand"
       >
         <n-icon :component="isExpanded ? ChevronDownOutline : ChevronForwardOutline" />
       </button>
-      <span v-else class="expand-placeholder"></span>
 
       <!-- Checkbox -->
       <button
@@ -60,16 +59,16 @@
       </button>
     </div>
 
-    <!-- 子任務列表 -->
+    <!-- 子任務列表（展開時顯示，可新增子任務） -->
     <Transition name="slide">
-      <div v-if="isExpanded && hasChildren" class="children-list">
+      <div v-if="isExpanded" class="children-list">
         <div
           v-for="child in todo.children"
           :key="child.id"
           class="todo-item child-item"
           :class="{ completed: child.completed }"
         >
-          <span class="expand-placeholder"></span>
+          <span class="child-indent"></span>
 
           <!-- Checkbox -->
           <button
@@ -104,12 +103,18 @@
           </button>
         </div>
 
+        <!-- 空狀態提示 -->
+        <div v-if="!hasChildren" class="empty-children">
+          <span>尚無子任務</span>
+        </div>
+
         <!-- 新增子任務 -->
         <div class="add-child-wrapper">
           <input
+            ref="addChildInputRef"
             v-model="newChildTitle"
             class="add-child-input"
-            placeholder="新增子任務..."
+            placeholder="+ 新增子任務..."
             @keyup.enter="addChild"
           />
         </div>
@@ -150,6 +155,7 @@ const editChildInputRef = ref<HTMLInputElement | null>(null);
 
 // 新增子任務
 const newChildTitle = ref('');
+const addChildInputRef = ref<HTMLInputElement | null>(null);
 
 // 計算屬性
 const hasChildren = computed(() => props.todo.children.length > 0);
@@ -307,9 +313,8 @@ async function addChild() {
   background-color: var(--bg-elevated);
 }
 
-.expand-placeholder {
-  width: 20px;
-  min-width: 20px;
+.expand-btn.has-children {
+  color: var(--text-secondary);
 }
 
 .checkbox {
@@ -432,9 +437,14 @@ async function addChild() {
   font-size: 13px;
 }
 
+.child-indent {
+  width: 8px;
+  min-width: 8px;
+}
+
 .add-child-wrapper {
   margin-top: var(--spacing-xs);
-  padding-left: 26px;
+  padding-left: 16px;
 }
 
 .add-child-input {
@@ -453,6 +463,13 @@ async function addChild() {
   border-color: var(--accent);
   border-style: solid;
   background-color: var(--bg-elevated);
+}
+
+.empty-children {
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
 }
 
 /* 展開動畫 */
