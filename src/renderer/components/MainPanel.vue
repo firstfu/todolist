@@ -1,12 +1,23 @@
 <!--
   MainPanel.vue - 右側主面板
-  顯示待辦清單與排序控制
+  顯示待辦清單與排序控制，包含側邊欄切換按鈕
 -->
 <template>
   <main class="main-panel">
     <!-- 標題列 -->
     <header class="panel-header">
-      <h2 class="panel-title">{{ panelTitle }}</h2>
+      <div class="header-left">
+        <!-- 側邊欄切換按鈕 -->
+        <button
+          class="toggle-sidebar-btn"
+          :title="store.sidebarVisible ? '隱藏側邊欄' : '顯示側邊欄'"
+          @click="store.toggleSidebar"
+        >
+          <n-icon :component="store.sidebarVisible ? MenuOutline : MenuOutline" size="20" />
+        </button>
+
+        <h2 class="panel-title">{{ panelTitle }}</h2>
+      </div>
 
       <!-- 排序下拉選單 -->
       <n-dropdown
@@ -36,7 +47,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { NDropdown, NIcon, NScrollbar } from 'naive-ui';
-import { SwapVerticalOutline, ChevronDownOutline } from '@vicons/ionicons5';
+import { SwapVerticalOutline, ChevronDownOutline, MenuOutline } from '@vicons/ionicons5';
 import { useTodoStore, SMART_LIST, type SortType } from '../stores/todoStore';
 import TodoList from './TodoList.vue';
 import TodoInput from './TodoInput.vue';
@@ -97,13 +108,39 @@ function handleSortSelect(key: string) {
   -webkit-app-region: drag;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  -webkit-app-region: no-drag;
+}
+
+.toggle-sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.toggle-sidebar-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+}
+
+.toggle-sidebar-btn:active {
+  background-color: var(--bg-elevated);
+}
+
 .panel-title {
   font-family: var(--font-title);
   font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-  -webkit-app-region: no-drag;
 }
 
 .sort-btn {

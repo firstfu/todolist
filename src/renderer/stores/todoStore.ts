@@ -62,6 +62,7 @@ export const useTodoStore = defineStore('todo', () => {
   const isLoading = ref(true);
   const expandedTodos = ref<Set<string>>(new Set());
   const expandedCategories = ref<Set<string>>(new Set());  // 展開的分類
+  const sidebarVisible = ref(true);  // 側邊欄是否顯示
 
   // 計算屬性：根分類（已排序）
   const rootCategories = computed(() => {
@@ -409,6 +410,11 @@ export const useTodoStore = defineStore('todo', () => {
     return categories.value.some(c => c.parentId === categoryId);
   }
 
+  // 切換側邊欄顯示
+  function toggleSidebar() {
+    sidebarVisible.value = !sidebarVisible.value;
+  }
+
   return {
     // 狀態
     categories,
@@ -444,5 +450,7 @@ export const useTodoStore = defineStore('todo', () => {
     toggleCategoryExpand,
     isCategoryExpanded,
     hasChildCategories,
+    sidebarVisible,
+    toggleSidebar,
   };
 });

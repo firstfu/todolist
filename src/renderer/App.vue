@@ -1,13 +1,15 @@
 <!--
   App.vue - 應用主框架
-  包含側邊欄與主面板的佈局
+  包含側邊欄與主面板的佈局，支援側邊欄顯示/隱藏
 -->
 <template>
   <n-config-provider :theme="darkTheme" :theme-overrides="themeOverrides">
     <n-message-provider>
       <n-dialog-provider>
         <div class="app-container">
-          <Sidebar />
+          <Transition name="sidebar">
+            <Sidebar v-show="store.sidebarVisible" />
+          </Transition>
           <MainPanel />
         </div>
       </n-dialog-provider>
@@ -19,6 +21,9 @@
 import { darkTheme, type GlobalThemeOverrides } from 'naive-ui';
 import Sidebar from './components/Sidebar.vue';
 import MainPanel from './components/MainPanel.vue';
+import { useTodoStore } from './stores/todoStore';
+
+const store = useTodoStore();
 
 // Naive UI 主題覆蓋，配合墨夜書房風格
 const themeOverrides: GlobalThemeOverrides = {
@@ -59,5 +64,19 @@ const themeOverrides: GlobalThemeOverrides = {
   height: 100vh;
   width: 100vw;
   background-color: var(--bg-deep);
+}
+
+/* 側邊欄過渡動畫 */
+.sidebar-enter-active,
+.sidebar-leave-active {
+  transition: all 0.3s ease;
+}
+
+.sidebar-enter-from,
+.sidebar-leave-to {
+  width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0;
+  transform: translateX(-100%);
 }
 </style>
