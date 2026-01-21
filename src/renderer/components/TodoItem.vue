@@ -1,6 +1,6 @@
 <!--
   TodoItem.vue - 單一待辦項目
-  支援展開子任務、標記完成、編輯、刪除
+  支援展開子任務、標記完成、編輯、刪除、拖曳、設定到期日
 -->
 <template>
   <div class="todo-item-wrapper">
@@ -12,7 +12,12 @@
         expanded: isExpanded,
       }"
     >
-      <!-- 展開/收合按鈕（始終顯示，方便新增子任務） -->
+      <!-- 拖曳把手 -->
+      <span class="drag-handle">
+        <n-icon :component="ReorderTwoOutline" size="14" />
+      </span>
+
+      <!-- 展開/收合按鈕 -->
       <button
         class="expand-btn"
         :class="{ 'has-children': hasChildren }"
@@ -47,6 +52,36 @@
           {{ todo.title }}
         </span>
       </div>
+
+      <!-- 到期日顯示 -->
+      <n-popover
+        trigger="click"
+        placement="bottom"
+        :show="showDatePicker"
+        @update:show="showDatePicker = $event"
+      >
+        <template #trigger>
+          <button
+            class="due-date-btn"
+            :class="dueDateInfo.status"
+            @click.stop="showDatePicker = true"
+          >
+            <n-icon :component="CalendarOutline" size="14" />
+            <span v-if="dueDateInfo.text">{{ dueDateInfo.text }}</span>
+          </button>
+        </template>
+        <div class="date-picker-content">
+          <n-date-picker
+            v-model:value="selectedDate"
+            type="date"
+            :is-date-disabled="isDateDisabled"
+            @update:value="onDateChange"
+          />
+          <button v-if="todo.dueDate" class="clear-date-btn" @click="clearDueDate">
+            清除到期日
+          </button>
+        </div>
+      </n-popover>
 
       <!-- 子任務數量標籤 -->
       <span v-if="hasChildren && !isExpanded" class="children-count">
@@ -125,14 +160,16 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
-import { NIcon, useMessage, useDialog } from 'naive-ui';
+import { NIcon, NPopover, NDatePicker, useMessage, useDialog } from 'naive-ui';
 import {
   ChevronForwardOutline,
   ChevronDownOutline,
   CheckmarkOutline,
   TrashOutline,
+  CalendarOutline,
+  ReorderTwoOutline,
 } from '@vicons/ionicons5';
-import { useTodoStore } from '../stores/todoStore';
+import { useTodoStore, formatDueDate } from '../stores/todoStore';
 import type { Todo, SubTodo } from '../types/electron';
 
 const props = defineProps<{
@@ -157,12 +194,41 @@ const editChildInputRef = ref<HTMLInputElement | null>(null);
 const newChildTitle = ref('');
 const addChildInputRef = ref<HTMLInputElement | null>(null);
 
+// 日期選擇器
+const showDatePicker = ref(false);
+const selectedDate = computed({
+  get: () => props.todo.dueDate ? new Date(props.todo.dueDate).getTime() : null,
+  set: () => {},
+});
+
 // 計算屬性
 const hasChildren = computed(() => props.todo.children.length > 0);
 const isExpanded = computed(() => store.isExpanded(props.todo.id));
 const completedChildrenCount = computed(() =>
   props.todo.children.filter(c => c.completed).length
 );
+const dueDateInfo = computed(() => formatDueDate(props.todo.dueDate));
+
+// 禁用過去的日期（可選）
+function isDateDisabled(timestamp: number) {
+  return false; // 允許選擇任何日期
+}
+
+// 日期改變
+async function onDateChange(timestamp: number | null) {
+  if (timestamp) {
+    const date = new Date(timestamp);
+    const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD 格式
+    await store.updateTodo(props.todo.id, { dueDate: dateStr });
+  }
+  showDatePicker.value = false;
+}
+
+// 清除到期日
+async function clearDueDate() {
+  await store.updateTodo(props.todo.id, { dueDate: null });
+  showDatePicker.value = false;
+}
 
 // 展開/收合
 function toggleExpand() {
@@ -297,6 +363,27 @@ async function addChild() {
   border-bottom-right-radius: 0;
 }
 
+/* 拖曳把手 */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.todo-item:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 .expand-btn {
   display: flex;
   align-items: center;
@@ -375,6 +462,56 @@ async function addChild() {
   color: var(--text-primary);
   font-size: 14px;
   outline: none;
+}
+
+/* 到期日按鈕 */
+.due-date-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background-color: transparent;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.due-date-btn:hover {
+  background-color: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.due-date-btn.overdue {
+  color: var(--danger);
+}
+
+.due-date-btn.today {
+  color: var(--accent);
+}
+
+.due-date-btn.soon {
+  color: #3b82f6;
+}
+
+.date-picker-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.clear-date-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+  background-color: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.clear-date-btn:hover {
+  color: var(--danger);
 }
 
 .children-count {

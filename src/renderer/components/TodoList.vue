@@ -1,6 +1,6 @@
 <!--
   TodoList.vue - 待辦清單容器
-  顯示當前分類的待辦事項列表
+  顯示當前分類的待辦事項列表，支援拖曳排序
 -->
 <template>
   <div class="todo-list">
@@ -20,25 +20,46 @@
       </template>
     </n-empty>
 
-    <!-- 待辦列表 -->
-    <TransitionGroup v-else name="todo-list" tag="div" class="todo-items">
-      <TodoItem
-        v-for="todo in store.currentTodos"
-        :key="todo.id"
-        :todo="todo"
-      />
-    </TransitionGroup>
+    <!-- 待辦列表（可拖曳排序） -->
+    <draggable
+      v-else
+      v-model="localTodos"
+      item-key="id"
+      class="todo-items"
+      ghost-class="ghost"
+      handle=".drag-handle"
+      :group="{ name: 'todos', pull: true, put: true }"
+      @end="onDragEnd"
+    >
+      <template #item="{ element: todo }">
+        <TodoItem :todo="todo" />
+      </template>
+    </draggable>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { NEmpty, NIcon } from 'naive-ui';
+import draggable from 'vuedraggable';
 import { CheckmarkDoneOutline } from '@vicons/ionicons5';
 import { useTodoStore, SMART_LIST } from '../stores/todoStore';
 import TodoItem from './TodoItem.vue';
+import type { Todo } from '../types/electron';
 
 const store = useTodoStore();
+
+// 本地待辦列表（用於拖曳）
+const localTodos = ref<Todo[]>([]);
+
+// 同步 store 的待辦到本地
+watch(
+  () => store.currentTodos,
+  (newTodos) => {
+    localTodos.value = [...newTodos];
+  },
+  { immediate: true, deep: true }
+);
 
 // 載入資料
 onMounted(() => {
@@ -52,6 +73,16 @@ const emptyDescription = computed(() => {
   }
   return '沒有待辦事項，新增一個吧！';
 });
+
+// 拖曳結束
+async function onDragEnd() {
+  // 更新排序
+  const orderUpdates = localTodos.value.map((todo, index) => ({
+    id: todo.id,
+    order: index,
+  }));
+  await store.updateTodoOrder(orderUpdates);
+}
 </script>
 
 <style scoped>
@@ -83,6 +114,11 @@ const emptyDescription = computed(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+}
+
+/* 拖曳中的幽靈樣式 */
+.ghost {
+  opacity: 0.5;
 }
 
 /* 列表動畫 */

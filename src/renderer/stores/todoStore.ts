@@ -7,13 +7,51 @@ import { ref, computed } from 'vue';
 import type { Category, Todo, SubTodo, StoreData } from '../types/electron';
 
 // 排序類型
-export type SortType = 'createdAt-desc' | 'createdAt-asc' | 'title' | 'completed' | 'custom';
+export type SortType = 'createdAt-desc' | 'createdAt-asc' | 'title' | 'completed' | 'dueDate' | 'custom';
 
 // 特殊視圖 ID
 export const SMART_LIST = {
   ALL: '__all__',
   COMPLETED: '__completed__',
 } as const;
+
+/**
+ * 格式化到期日顯示
+ * 7 天內：「今天」、「明天」、「後天」、「週X」
+ * 7 天後：「1/25」或「1月25日」
+ * 過期：紅色標示
+ */
+export function formatDueDate(dueDate: string | null): { text: string; status: 'overdue' | 'today' | 'soon' | 'normal' | null } {
+  if (!dueDate) return { text: '', status: null };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+
+  if (diffDays < 0) {
+    // 已過期
+    const overdueDays = Math.abs(diffDays);
+    return { text: `已過期 ${overdueDays} 天`, status: 'overdue' };
+  } else if (diffDays === 0) {
+    return { text: '今天', status: 'today' };
+  } else if (diffDays === 1) {
+    return { text: '明天', status: 'soon' };
+  } else if (diffDays === 2) {
+    return { text: '後天', status: 'soon' };
+  } else if (diffDays <= 7) {
+    return { text: weekdays[due.getDay()], status: 'normal' };
+  } else {
+    // 超過 7 天
+    const month = due.getMonth() + 1;
+    const day = due.getDate();
+    return { text: `${month}/${day}`, status: 'normal' };
+  }
+}
 
 export const useTodoStore = defineStore('todo', () => {
   // 狀態
@@ -88,6 +126,15 @@ export const useTodoStore = defineStore('todo', () => {
           return a.completed ? 1 : -1;
         });
         break;
+      case 'dueDate':
+        sorted.sort((a, b) => {
+          // 沒有到期日的排最後
+          if (!a.dueDate && !b.dueDate) return a.order - b.order;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        });
+        break;
       case 'custom':
       default:
         sorted.sort((a, b) => a.order - b.order);
@@ -148,6 +195,48 @@ export const useTodoStore = defineStore('todo', () => {
       const category = categories.value.find(c => c.id === id);
       if (category) {
         category.name = name;
+      }
+    }
+    return success;
+  }
+
+  // 更新分類排序
+  async function updateCategoryOrder(items: Array<{id: string, order: number}>) {
+    const success = await window.electronAPI.updateOrder('categories', items);
+    if (success) {
+      // 更新本地狀態
+      for (const item of items) {
+        const category = categories.value.find(c => c.id === item.id);
+        if (category) {
+          category.order = item.order;
+        }
+      }
+    }
+    return success;
+  }
+
+  // 更新任務排序
+  async function updateTodoOrder(items: Array<{id: string, order: number}>) {
+    const success = await window.electronAPI.updateOrder('todos', items);
+    if (success) {
+      // 更新本地狀態
+      for (const item of items) {
+        const todo = todos.value.find(t => t.id === item.id);
+        if (todo) {
+          todo.order = item.order;
+        }
+      }
+    }
+    return success;
+  }
+
+  // 移動任務到其他分類
+  async function moveTodoToCategory(todoId: string, newCategoryId: string) {
+    const success = await window.electronAPI.moveTodoToCategory(todoId, newCategoryId);
+    if (success) {
+      const todo = todos.value.find(t => t.id === todoId);
+      if (todo) {
+        todo.categoryId = newCategoryId;
       }
     }
     return success;
@@ -281,6 +370,9 @@ export const useTodoStore = defineStore('todo', () => {
     addCategory,
     deleteCategory,
     updateCategory,
+    updateCategoryOrder,
+    updateTodoOrder,
+    moveTodoToCategory,
     addTodo,
     updateTodo,
     deleteTodo,

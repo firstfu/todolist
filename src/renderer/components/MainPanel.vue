@@ -58,6 +58,7 @@ const panelTitle = computed(() => {
 // 排序選項
 const sortOptions = [
   { label: '自訂排序', key: 'custom' },
+  { label: '到期日', key: 'dueDate' },
   { label: '建立時間（新→舊）', key: 'createdAt-desc' },
   { label: '建立時間（舊→新）', key: 'createdAt-asc' },
   { label: '名稱（A→Z）', key: 'title' },

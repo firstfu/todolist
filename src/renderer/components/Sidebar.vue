@@ -1,6 +1,7 @@
 <!--
   Sidebar.vue - 左側分類欄
   包含智慧清單（所有任務、已完成）與自訂分類
+  支援分類拖曳排序
 -->
 <template>
   <aside class="sidebar">
@@ -38,47 +39,59 @@
 
     <div class="divider"></div>
 
-    <!-- 自訂分類 -->
+    <!-- 自訂分類（可拖曳排序） -->
     <div class="categories-section">
       <n-scrollbar style="max-height: calc(100vh - 280px)">
-        <nav class="category-list">
-          <div
-            v-for="category in store.sortedCategories"
-            :key="category.id"
-            class="nav-item category-item"
-            :class="{ active: store.selectedCategoryId === category.id }"
-            @click="store.selectCategory(category.id)"
-            @dblclick="startEdit(category)"
-          >
-            <span class="nav-icon">
-              <n-icon :component="FolderOutline" />
-            </span>
-
-            <!-- 編輯模式 -->
-            <input
-              v-if="editingId === category.id"
-              ref="editInputRef"
-              v-model="editingName"
-              class="edit-input"
-              @blur="finishEdit"
-              @keyup.enter="finishEdit"
-              @keyup.escape="cancelEdit"
-              @click.stop
-            />
-            <span v-else class="nav-label">{{ category.name }}</span>
-
-            <span class="nav-count">{{ store.categoryTodoCounts[category.id] || 0 }}</span>
-
-            <!-- 刪除按鈕 -->
-            <button
-              v-if="editingId !== category.id"
-              class="delete-btn"
-              @click.stop="confirmDelete(category)"
+        <draggable
+          v-model="localCategories"
+          item-key="id"
+          class="category-list"
+          ghost-class="ghost"
+          handle=".drag-handle"
+          @end="onCategoryDragEnd"
+        >
+          <template #item="{ element: category }">
+            <div
+              class="nav-item category-item"
+              :class="{ active: store.selectedCategoryId === category.id }"
+              @click="store.selectCategory(category.id)"
+              @dblclick="startEdit(category)"
             >
-              <n-icon :component="TrashOutline" size="14" />
-            </button>
-          </div>
-        </nav>
+              <!-- 拖曳把手 -->
+              <span class="drag-handle">
+                <n-icon :component="ReorderTwoOutline" size="14" />
+              </span>
+
+              <span class="nav-icon">
+                <n-icon :component="FolderOutline" />
+              </span>
+
+              <!-- 編輯模式 -->
+              <input
+                v-if="editingId === category.id"
+                ref="editInputRef"
+                v-model="editingName"
+                class="edit-input"
+                @blur="finishEdit"
+                @keyup.enter="finishEdit"
+                @keyup.escape="cancelEdit"
+                @click.stop
+              />
+              <span v-else class="nav-label">{{ category.name }}</span>
+
+              <span class="nav-count">{{ store.categoryTodoCounts[category.id] || 0 }}</span>
+
+              <!-- 刪除按鈕 -->
+              <button
+                v-if="editingId !== category.id"
+                class="delete-btn"
+                @click.stop="confirmDelete(category)"
+              >
+                <n-icon :component="TrashOutline" size="14" />
+              </button>
+            </div>
+          </template>
+        </draggable>
       </n-scrollbar>
     </div>
 
@@ -104,14 +117,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, watch } from 'vue';
 import { NIcon, NScrollbar, useDialog, useMessage } from 'naive-ui';
+import draggable from 'vuedraggable';
 import {
   ListOutline,
   CheckmarkCircleOutline,
   FolderOutline,
   AddOutline,
   TrashOutline,
+  ReorderTwoOutline,
 } from '@vicons/ionicons5';
 import { useTodoStore, SMART_LIST } from '../stores/todoStore';
 import type { Category } from '../types/electron';
@@ -119,6 +134,18 @@ import type { Category } from '../types/electron';
 const store = useTodoStore();
 const dialog = useDialog();
 const message = useMessage();
+
+// 本地分類列表（用於拖曳）
+const localCategories = ref<Category[]>([]);
+
+// 同步 store 的分類到本地
+watch(
+  () => store.sortedCategories,
+  (newCategories) => {
+    localCategories.value = [...newCategories];
+  },
+  { immediate: true, deep: true }
+);
 
 // 編輯狀態
 const editingId = ref<string | null>(null);
@@ -129,6 +156,16 @@ const editInputRef = ref<HTMLInputElement | null>(null);
 const isAdding = ref(false);
 const newCategoryName = ref('');
 const addInputRef = ref<HTMLInputElement | null>(null);
+
+// 分類拖曳結束
+async function onCategoryDragEnd() {
+  // 更新排序
+  const orderUpdates = localCategories.value.map((cat, index) => ({
+    id: cat.id,
+    order: index,
+  }));
+  await store.updateCategoryOrder(orderUpdates);
+}
 
 // 開始編輯
 function startEdit(category: Category) {
@@ -212,7 +249,7 @@ function cancelAdd() {
 
 .sidebar-header {
   padding: var(--spacing-lg) var(--spacing-md);
-  padding-top: 40px; /* 留空給視窗控制按鈕 */
+  padding-top: 40px;
 }
 
 .app-title {
@@ -259,6 +296,34 @@ function cancelAdd() {
   height: 60%;
   background-color: var(--accent);
   border-radius: 0 2px 2px 0;
+}
+
+/* 拖曳把手 */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  color: var(--text-muted);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.category-item:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* 拖曳中的幽靈樣式 */
+.ghost {
+  opacity: 0.5;
+  background-color: var(--accent-soft);
 }
 
 .nav-icon {
