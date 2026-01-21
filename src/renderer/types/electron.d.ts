@@ -27,6 +27,7 @@ export interface Category {
   id: string;
   name: string;
   order: number;
+  parentId: string | null;  // null = 根分類，有值 = 子分類
 }
 
 export interface StoreData {
@@ -40,9 +41,10 @@ export interface ElectronAPI {
   saveData: (data: StoreData) => Promise<boolean>;
 
   // 分類操作
-  addCategory: (name: string) => Promise<Category | null>;
+  addCategory: (name: string, parentId?: string) => Promise<Category | null>;
   deleteCategory: (id: string) => Promise<boolean>;
   updateCategory: (id: string, name: string) => Promise<boolean>;
+  getCategoryWithChildrenIds: (categoryId: string) => Promise<string[]>;
 
   // 待辦操作
   addTodo: (categoryId: string, title: string, parentId?: string) => Promise<Todo | SubTodo | null>;

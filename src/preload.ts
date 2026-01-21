@@ -11,9 +11,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveData: (data: unknown) => ipcRenderer.invoke('store:saveData', data),
 
   // 分類操作
-  addCategory: (name: string) => ipcRenderer.invoke('store:addCategory', name),
+  addCategory: (name: string, parentId?: string) =>
+    ipcRenderer.invoke('store:addCategory', name, parentId),
   deleteCategory: (id: string) => ipcRenderer.invoke('store:deleteCategory', id),
   updateCategory: (id: string, name: string) => ipcRenderer.invoke('store:updateCategory', id, name),
+  getCategoryWithChildrenIds: (categoryId: string) =>
+    ipcRenderer.invoke('store:getCategoryWithChildrenIds', categoryId),
 
   // 待辦操作
   addTodo: (categoryId: string, title: string, parentId?: string) =>

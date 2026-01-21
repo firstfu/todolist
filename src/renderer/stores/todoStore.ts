@@ -61,11 +61,36 @@ export const useTodoStore = defineStore('todo', () => {
   const sortType = ref<SortType>('custom');
   const isLoading = ref(true);
   const expandedTodos = ref<Set<string>>(new Set());
+  const expandedCategories = ref<Set<string>>(new Set());  // 展開的分類
 
-  // 計算屬性：已排序的分類
+  // 計算屬性：根分類（已排序）
+  const rootCategories = computed(() => {
+    return categories.value
+      .filter(c => c.parentId === null)
+      .sort((a, b) => a.order - b.order);
+  });
+
+  // 計算屬性：取得某分類的子分類（已排序）
+  function getChildCategories(parentId: string): Category[] {
+    return categories.value
+      .filter(c => c.parentId === parentId)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  // 計算屬性：已排序的分類（扁平化，用於向後兼容）
   const sortedCategories = computed(() => {
     return [...categories.value].sort((a, b) => a.order - b.order);
   });
+
+  // 計算屬性：取得分類及其子分類的所有 ID
+  function getCategoryWithChildrenIds(categoryId: string): string[] {
+    const ids = [categoryId];
+    const children = categories.value.filter(c => c.parentId === categoryId);
+    for (const child of children) {
+      ids.push(child.id);
+    }
+    return ids;
+  }
 
   // 計算屬性：當前顯示的待辦
   const currentTodos = computed(() => {
@@ -78,21 +103,31 @@ export const useTodoStore = defineStore('todo', () => {
       // 所有已完成的任務
       filtered = todos.value.filter(t => t.completed);
     } else {
-      // 特定分類的任務
-      filtered = todos.value.filter(t => t.categoryId === selectedCategoryId.value);
+      // 特定分類的任務（包含子分類）
+      const categoryIds = getCategoryWithChildrenIds(selectedCategoryId.value);
+      filtered = todos.value.filter(t => categoryIds.includes(t.categoryId));
     }
 
     // 排序
     return sortTodos(filtered, sortType.value);
   });
 
-  // 計算屬性：各分類的任務數量
+  // 計算屬性：各分類的任務數量（父分類包含子分類的數量）
   const categoryTodoCounts = computed(() => {
     const counts: Record<string, number> = {};
     for (const category of categories.value) {
-      counts[category.id] = todos.value.filter(
-        t => t.categoryId === category.id && !t.completed
-      ).length;
+      if (category.parentId === null) {
+        // 父分類：計算自己 + 所有子分類的任務
+        const categoryIds = getCategoryWithChildrenIds(category.id);
+        counts[category.id] = todos.value.filter(
+          t => categoryIds.includes(t.categoryId) && !t.completed
+        ).length;
+      } else {
+        // 子分類：只計算自己的任務
+        counts[category.id] = todos.value.filter(
+          t => t.categoryId === category.id && !t.completed
+        ).length;
+      }
     }
     return counts;
   });
@@ -166,22 +201,29 @@ export const useTodoStore = defineStore('todo', () => {
     sortType.value = type;
   }
 
-  // 新增分類
-  async function addCategory(name: string) {
-    const result = await window.electronAPI.addCategory(name);
+  // 新增分類（支援子分類）
+  async function addCategory(name: string, parentId?: string) {
+    const result = await window.electronAPI.addCategory(name, parentId);
     if (result) {
       categories.value.push(result);
     }
     return result;
   }
 
-  // 刪除分類
+  // 刪除分類（包含子分類）
   async function deleteCategory(id: string) {
     const success = await window.electronAPI.deleteCategory(id);
     if (success) {
-      categories.value = categories.value.filter(c => c.id !== id);
-      todos.value = todos.value.filter(t => t.categoryId !== id);
-      if (selectedCategoryId.value === id) {
+      // 收集要刪除的分類 ID（包含子分類）
+      const categoryIdsToDelete = getCategoryWithChildrenIds(id);
+
+      categories.value = categories.value.filter(
+        c => !categoryIdsToDelete.includes(c.id)
+      );
+      todos.value = todos.value.filter(
+        t => !categoryIdsToDelete.includes(t.categoryId)
+      );
+      if (categoryIdsToDelete.includes(selectedCategoryId.value)) {
         selectedCategoryId.value = SMART_LIST.ALL;
       }
     }
@@ -348,6 +390,25 @@ export const useTodoStore = defineStore('todo', () => {
     return expandedTodos.value.has(todoId);
   }
 
+  // 切換分類展開/收合
+  function toggleCategoryExpand(categoryId: string) {
+    if (expandedCategories.value.has(categoryId)) {
+      expandedCategories.value.delete(categoryId);
+    } else {
+      expandedCategories.value.add(categoryId);
+    }
+  }
+
+  // 檢查分類是否展開
+  function isCategoryExpanded(categoryId: string): boolean {
+    return expandedCategories.value.has(categoryId);
+  }
+
+  // 檢查分類是否有子分類
+  function hasChildCategories(categoryId: string): boolean {
+    return categories.value.some(c => c.parentId === categoryId);
+  }
+
   return {
     // 狀態
     categories,
@@ -358,6 +419,7 @@ export const useTodoStore = defineStore('todo', () => {
 
     // 計算屬性
     sortedCategories,
+    rootCategories,
     currentTodos,
     categoryTodoCounts,
     allTodoCount,
@@ -378,5 +440,9 @@ export const useTodoStore = defineStore('todo', () => {
     deleteTodo,
     toggleExpand,
     isExpanded,
+    getChildCategories,
+    toggleCategoryExpand,
+    isCategoryExpanded,
+    hasChildCategories,
   };
 });

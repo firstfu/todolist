@@ -31,6 +31,7 @@ export interface Category {
   id: string;
   name: string;
   order: number;
+  parentId: string | null;  // null = 根分類，有值 = 子分類
 }
 
 export interface StoreData {
@@ -41,8 +42,8 @@ export interface StoreData {
 // 預設資料
 const defaultData: StoreData = {
   categories: [
-    { id: 'cat-default-1', name: '工作', order: 0 },
-    { id: 'cat-default-2', name: '個人', order: 1 },
+    { id: 'cat-default-1', name: '工作', order: 0, parentId: null },
+    { id: 'cat-default-2', name: '個人', order: 1, parentId: null },
   ],
   todos: [],
 };
@@ -129,12 +130,25 @@ export class TodoStore {
 
   /**
    * 新增分類
+   * @param name 分類名稱
+   * @param parentId 父分類 ID（null 表示根分類）
    */
-  addCategory(name: string): Category | null {
+  addCategory(name: string, parentId: string | null = null): Category | null {
+    // 檢查父分類是否存在（如果指定了 parentId）
+    if (parentId) {
+      const parentCategory = this.data.categories.find(c => c.id === parentId);
+      if (!parentCategory) return null;
+      // 檢查父分類本身不能是子分類（限制 2 層）
+      if (parentCategory.parentId !== null) return null;
+    }
+
+    // 計算同層級的 order
+    const siblings = this.data.categories.filter(c => c.parentId === parentId);
     const newCategory: Category = {
       id: generateId('cat'),
       name,
-      order: this.data.categories.length,
+      order: siblings.length,
+      parentId,
     };
     this.data.categories.push(newCategory);
     this.saveToFile(this.data);
@@ -142,15 +156,28 @@ export class TodoStore {
   }
 
   /**
-   * 刪除分類
+   * 刪除分類（包含子分類和相關任務）
    */
   deleteCategory(id: string): boolean {
-    const index = this.data.categories.findIndex(c => c.id === id);
-    if (index === -1) return false;
+    const category = this.data.categories.find(c => c.id === id);
+    if (!category) return false;
 
-    this.data.categories.splice(index, 1);
-    // 同時刪除該分類下的所有待辦
-    this.data.todos = this.data.todos.filter(t => t.categoryId !== id);
+    // 收集要刪除的分類 ID（包含自己和所有子分類）
+    const categoryIdsToDelete = [id];
+    const childCategories = this.data.categories.filter(c => c.parentId === id);
+    for (const child of childCategories) {
+      categoryIdsToDelete.push(child.id);
+    }
+
+    // 刪除分類
+    this.data.categories = this.data.categories.filter(
+      c => !categoryIdsToDelete.includes(c.id)
+    );
+    // 刪除相關任務
+    this.data.todos = this.data.todos.filter(
+      t => !categoryIdsToDelete.includes(t.categoryId)
+    );
+
     this.saveToFile(this.data);
     return true;
   }
@@ -302,5 +329,18 @@ export class TodoStore {
     }
     this.saveToFile(this.data);
     return true;
+  }
+
+  /**
+   * 取得分類及其所有子分類的 ID 列表
+   * 用於任務篩選（選擇父分類時要顯示所有子分類的任務）
+   */
+  getCategoryWithChildrenIds(categoryId: string): string[] {
+    const ids = [categoryId];
+    const children = this.data.categories.filter(c => c.parentId === categoryId);
+    for (const child of children) {
+      ids.push(child.id);
+    }
+    return ids;
   }
 }

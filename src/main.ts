@@ -64,9 +64,9 @@ function registerIpcHandlers() {
     return store.saveData(data);
   });
 
-  // 新增分類
-  ipcMain.handle('store:addCategory', async (_event, name: string) => {
-    return store.addCategory(name);
+  // 新增分類（支援子分類）
+  ipcMain.handle('store:addCategory', async (_event, name: string, parentId?: string) => {
+    return store.addCategory(name, parentId || null);
   });
 
   // 刪除分類
@@ -102,6 +102,11 @@ function registerIpcHandlers() {
   // 移動任務到其他分類
   ipcMain.handle('store:moveTodoToCategory', async (_event, todoId: string, newCategoryId: string) => {
     return store.moveTodoToCategory(todoId, newCategoryId);
+  });
+
+  // 取得分類及其子分類的 ID 列表
+  ipcMain.handle('store:getCategoryWithChildrenIds', async (_event, categoryId: string) => {
+    return store.getCategoryWithChildrenIds(categoryId);
   });
 }
 
