@@ -98,6 +98,11 @@ function registerIpcHandlers() {
   ipcMain.handle('store:updateOrder', async (_event, type: 'categories' | 'todos', items: Array<{id: string, order: number}>) => {
     return store.updateOrder(type, items);
   });
+
+  // 移動任務到其他分類
+  ipcMain.handle('store:moveTodoToCategory', async (_event, todoId: string, newCategoryId: string) => {
+    return store.moveTodoToCategory(todoId, newCategoryId);
+  });
 }
 
 // 應用準備就緒

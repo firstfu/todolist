@@ -25,4 +25,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 排序操作
   updateOrder: (type: 'categories' | 'todos', items: Array<{id: string, order: number}>) =>
     ipcRenderer.invoke('store:updateOrder', type, items),
+
+  // 移動任務到其他分類
+  moveTodoToCategory: (todoId: string, newCategoryId: string) =>
+    ipcRenderer.invoke('store:moveTodoToCategory', todoId, newCategoryId),
 });

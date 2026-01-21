@@ -18,6 +18,7 @@ export interface Todo {
   completed: boolean;
   createdAt: string;
   completedAt: string | null;
+  dueDate: string | null;  // 到期日，格式：YYYY-MM-DD
   order: number;
   children: SubTodo[];
 }
@@ -50,6 +51,9 @@ export interface ElectronAPI {
 
   // 排序操作
   updateOrder: (type: 'categories' | 'todos', items: Array<{id: string, order: number}>) => Promise<boolean>;
+
+  // 移動任務
+  moveTodoToCategory: (todoId: string, newCategoryId: string) => Promise<boolean>;
 }
 
 declare global {

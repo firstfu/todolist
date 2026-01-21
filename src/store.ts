@@ -22,6 +22,7 @@ export interface Todo {
   completed: boolean;
   createdAt: string;
   completedAt: string | null;
+  dueDate: string | null;  // 到期日，格式：YYYY-MM-DD
   order: number;
   children: SubTodo[];
 }
@@ -195,6 +196,7 @@ export class TodoStore {
       completed: false,
       createdAt: new Date().toISOString(),
       completedAt: null,
+      dueDate: null,
       order: this.data.todos.filter(t => t.categoryId === categoryId).length,
       children: [],
     };
@@ -261,6 +263,22 @@ export class TodoStore {
     }
 
     return false;
+  }
+
+  /**
+   * 移動任務到其他分類
+   */
+  moveTodoToCategory(todoId: string, newCategoryId: string): boolean {
+    const todo = this.data.todos.find(t => t.id === todoId);
+    if (!todo) return false;
+
+    // 更新分類 ID
+    todo.categoryId = newCategoryId;
+    // 重新計算 order（放到新分類的最後面）
+    todo.order = this.data.todos.filter(t => t.categoryId === newCategoryId && t.id !== todoId).length;
+
+    this.saveToFile(this.data);
+    return true;
   }
 
   /**
