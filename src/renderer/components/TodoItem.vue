@@ -622,8 +622,8 @@ async function addChild() {
 .children-container {
   position: relative;
   margin-top: 2px;
-  margin-left: 42px;
-  margin-right: 8px;
+  margin-left: 0;
+  margin-right: 0;
   padding: var(--spacing-md);
   background: linear-gradient(
     135deg,
@@ -636,21 +636,6 @@ async function addChild() {
   backdrop-filter: blur(8px);
 }
 
-/* 左側裝飾邊線 */
-.children-container::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(
-    180deg,
-    var(--accent) 0%,
-    rgba(242, 184, 48, 0.3) 100%
-  );
-  border-radius: 0 0 0 var(--radius-lg);
-}
 
 /* 進度區塊 */
 .children-header {

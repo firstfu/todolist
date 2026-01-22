@@ -5,14 +5,14 @@
 
 /* CSS 變數 */
 :root {
-  /* 背景層次 - 淡墨書房（較淺的深色調） */
-  --bg-deep: #1a1f26;
-  --bg-surface: #242a33;
-  --bg-elevated: #2e3640;
+  /* 背景層次 - 淡墨書房（輕微調亮） */
+  --bg-deep: #212730;
+  --bg-surface: #2b323c;
+  --bg-elevated: #363e49;
 
   /* 文字層次 - 略微調亮以配合背景 */
   --text-primary: #eaf0f6;
-  --text-secondary: #8b929a;
+  --text-secondary: #969da5;
   --text-muted: #5a6370;
 
   /* 強調色 - 保持金色調性，微調以配合新背景 */
@@ -21,7 +21,7 @@
   --accent-hover: #f7c95a;
 
   /* 狀態色 - 邊框稍微調亮 */
-  --border: #3d4550;
+  --border: #454d59;
   --hover-glow: rgba(242, 184, 48, 0.10);
   --danger: #f85149;
   --success: #3fb950;
