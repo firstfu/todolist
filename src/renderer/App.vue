@@ -25,35 +25,35 @@ import { useTodoStore } from './stores/todoStore';
 
 const store = useTodoStore();
 
-// Naive UI 主題覆蓋，配合墨夜書房風格
+// Naive UI 主題覆蓋，配合淡墨書房風格（較淺的深色調）
 const themeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: '#f0b429',
-    primaryColorHover: '#f5c451',
-    primaryColorPressed: '#d9a21e',
+    primaryColor: '#f2b830',
+    primaryColorHover: '#f7c95a',
+    primaryColorPressed: '#dba520',
     borderRadius: '8px',
     fontFamily: "'Noto Sans TC', sans-serif",
   },
   Button: {
-    textColorPrimary: '#0d1117',
+    textColorPrimary: '#1a1f26',
   },
   Input: {
-    color: '#161b22',
-    colorFocus: '#21262d',
-    border: '1px solid #30363d',
-    borderFocus: '1px solid #f0b429',
-    textColor: '#e6edf3',
-    placeholderColor: '#484f58',
+    color: '#242a33',
+    colorFocus: '#2e3640',
+    border: '1px solid #3d4550',
+    borderFocus: '1px solid #f2b830',
+    textColor: '#eaf0f6',
+    placeholderColor: '#5a6370',
   },
   Checkbox: {
-    colorChecked: '#f0b429',
-    borderChecked: '1px solid #f0b429',
-    checkMarkColor: '#0d1117',
+    colorChecked: '#f2b830',
+    borderChecked: '1px solid #f2b830',
+    checkMarkColor: '#1a1f26',
   },
   Dropdown: {
-    color: '#161b22',
-    optionColorHover: '#21262d',
-    optionTextColor: '#e6edf3',
+    color: '#242a33',
+    optionColorHover: '#2e3640',
+    optionTextColor: '#eaf0f6',
   },
 };
 </script>

@@ -5,24 +5,24 @@
 
 /* CSS 變數 */
 :root {
-  /* 背景層次 */
-  --bg-deep: #0d1117;
-  --bg-surface: #161b22;
-  --bg-elevated: #21262d;
+  /* 背景層次 - 淡墨書房（較淺的深色調） */
+  --bg-deep: #1a1f26;
+  --bg-surface: #242a33;
+  --bg-elevated: #2e3640;
 
-  /* 文字層次 */
-  --text-primary: #e6edf3;
-  --text-secondary: #7d8590;
-  --text-muted: #484f58;
+  /* 文字層次 - 略微調亮以配合背景 */
+  --text-primary: #eaf0f6;
+  --text-secondary: #8b929a;
+  --text-muted: #5a6370;
 
-  /* 強調色 */
-  --accent: #f0b429;
-  --accent-soft: rgba(240, 180, 41, 0.15);
-  --accent-hover: #f5c451;
+  /* 強調色 - 保持金色調性，微調以配合新背景 */
+  --accent: #f2b830;
+  --accent-soft: rgba(242, 184, 48, 0.18);
+  --accent-hover: #f7c95a;
 
-  /* 狀態色 */
-  --border: #30363d;
-  --hover-glow: rgba(240, 180, 41, 0.08);
+  /* 狀態色 - 邊框稍微調亮 */
+  --border: #3d4550;
+  --hover-glow: rgba(242, 184, 48, 0.10);
   --danger: #f85149;
   --success: #3fb950;
 
