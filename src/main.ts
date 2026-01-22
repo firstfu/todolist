@@ -30,6 +30,7 @@ const createWindow = () => {
       height: 36,
     },
     backgroundColor: '#272e38',
+    icon: path.join(__dirname, '../../assets/icons/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

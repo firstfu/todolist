@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- 背景漸層 -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2a3140"/>
+      <stop offset="100%" style="stop-color:#1a1f26"/>
+    </linearGradient>
+
+    <!-- 勾選符號漸層 -->
+    <linearGradient id="checkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f7c95a"/>
+      <stop offset="50%" style="stop-color:#f2b830"/>
+      <stop offset="100%" style="stop-color:#dba520"/>
+    </linearGradient>
+
+    <!-- 高光漸層 -->
+    <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.15)"/>
+      <stop offset="50%" style="stop-color:rgba(255,255,255,0)"/>
+    </linearGradient>
+
+    <!-- 陰影濾鏡 -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- 內陰影濾鏡 -->
+    <filter id="innerShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feComponentTransfer in="SourceAlpha">
+        <feFuncA type="table" tableValues="1 0"/>
+      </feComponentTransfer>
+      <feGaussianBlur stdDeviation="3"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.3"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 勾選高光濾鏡 -->
+    <filter id="checkGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 圓角矩形裁切 -->
+    <clipPath id="roundedClip">
+      <rect x="16" y="16" width="480" height="480" rx="96" ry="96"/>
+    </clipPath>
+  </defs>
+
+  <!-- 主要圓角方形背景（帶陰影） -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96"
+        fill="url(#bgGradient)" filter="url(#dropShadow)"/>
+
+  <!-- 邊框 -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96"
+        fill="none" stroke="#0d1117" stroke-width="1" opacity="0.5"/>
+
+  <!-- 頂部高光 -->
+  <rect x="16" y="16" width="480" height="240" rx="96" ry="96"
+        fill="url(#highlightGradient)" clip-path="url(#roundedClip)"/>
+
+  <!-- 勾選符號 -->
+  <g filter="url(#checkGlow)">
+    <path d="M148 274 L218 344 L364 168"
+          fill="none"
+          stroke="url(#checkGradient)"
+          stroke-width="56"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          filter="url(#innerShadow)"/>
+  </g>
+
+  <!-- 勾選符號上的高光線 -->
+  <path d="M156 266 L222 332 L360 164"
+        fill="none"
+        stroke="rgba(255,255,255,0.25)"
+        stroke-width="8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>
