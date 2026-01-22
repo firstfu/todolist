@@ -124,6 +124,7 @@ async function addTodo() {
   font-size: 15px;
   background: transparent;
   color: var(--text-primary);
+  outline: none;
 }
 
 .todo-input::placeholder {

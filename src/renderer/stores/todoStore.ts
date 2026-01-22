@@ -9,6 +9,9 @@ import type { Category, Todo, SubTodo, StoreData } from '../types/electron';
 // 排序類型
 export type SortType = 'createdAt-desc' | 'createdAt-asc' | 'title' | 'completed' | 'dueDate' | 'custom';
 
+// 視圖類型
+export type ViewType = 'list' | 'calendar';
+
 // 特殊視圖 ID
 export const SMART_LIST = {
   ALL: '__all__',
@@ -92,6 +95,8 @@ export const useTodoStore = defineStore('todo', () => {
   const expandedTodos = ref<Set<string>>(new Set());
   const expandedCategories = ref<Set<string>>(new Set());  // 展開的分類
   const sidebarVisible = ref(true);  // 側邊欄是否顯示
+  const viewType = ref<ViewType>('list');  // 視圖類型：列表或日曆
+  const selectedDate = ref<string | null>(null);  // 日曆選中的日期
 
   // 計算屬性：根分類（已排序）
   const rootCategories = computed(() => {
@@ -170,6 +175,41 @@ export const useTodoStore = defineStore('todo', () => {
   // 計算屬性：已完成任務數量
   const completedTodoCount = computed(() => {
     return todos.value.filter(t => t.completed).length;
+  });
+
+  // 計算屬性：按日期分組任務（用於日曆視圖）
+  const todosByDateMap = computed(() => {
+    const map: Record<string, Todo[]> = {};
+
+    // 根據當前選擇的分類篩選任務
+    let filtered: Todo[];
+    if (selectedCategoryId.value === SMART_LIST.ALL) {
+      filtered = todos.value;
+    } else if (selectedCategoryId.value === SMART_LIST.COMPLETED) {
+      filtered = todos.value.filter(t => t.completed);
+    } else {
+      const categoryIds = getCategoryWithChildrenIds(selectedCategoryId.value);
+      filtered = todos.value.filter(t => categoryIds.includes(t.categoryId));
+    }
+
+    // 只處理有到期日的任務
+    for (const todo of filtered) {
+      if (todo.dueDate) {
+        const dateKey = todo.dueDate.split('T')[0];  // 取得 YYYY-MM-DD
+        if (!map[dateKey]) {
+          map[dateKey] = [];
+        }
+        map[dateKey].push(todo);
+      }
+    }
+
+    return map;
+  });
+
+  // 計算屬性：選中日期的任務
+  const selectedDateTodos = computed(() => {
+    if (!selectedDate.value) return [];
+    return todosByDateMap.value[selectedDate.value] || [];
   });
 
   // 排序函數
@@ -444,6 +484,20 @@ export const useTodoStore = defineStore('todo', () => {
     sidebarVisible.value = !sidebarVisible.value;
   }
 
+  // 設定視圖類型
+  function setViewType(type: ViewType) {
+    viewType.value = type;
+    // 切換視圖時清除選中日期
+    if (type === 'list') {
+      selectedDate.value = null;
+    }
+  }
+
+  // 選擇日期（日曆視圖用）
+  function selectDate(date: string | null) {
+    selectedDate.value = date;
+  }
+
   return {
     // 狀態
     categories,
@@ -451,6 +505,8 @@ export const useTodoStore = defineStore('todo', () => {
     selectedCategoryId,
     sortType,
     isLoading,
+    viewType,
+    selectedDate,
 
     // 計算屬性
     sortedCategories,
@@ -459,6 +515,8 @@ export const useTodoStore = defineStore('todo', () => {
     categoryTodoCounts,
     allTodoCount,
     completedTodoCount,
+    todosByDateMap,
+    selectedDateTodos,
 
     // 方法
     loadData,
@@ -481,5 +539,7 @@ export const useTodoStore = defineStore('todo', () => {
     hasChildCategories,
     sidebarVisible,
     toggleSidebar,
+    setViewType,
+    selectDate,
   };
 });

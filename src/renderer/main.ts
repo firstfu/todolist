@@ -17,6 +17,7 @@ import {
   NScrollbar,
   NEmpty,
   NTooltip,
+  NCalendar,
 } from 'naive-ui';
 import App from './App.vue';
 import './styles/global.css';
@@ -35,6 +36,7 @@ const naive = create({
     NScrollbar,
     NEmpty,
     NTooltip,
+    NCalendar,
   ],
 });
 

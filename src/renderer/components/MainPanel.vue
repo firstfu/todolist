@@ -19,38 +19,69 @@
         <h2 class="panel-title">{{ panelTitle }}</h2>
       </div>
 
-      <!-- 排序下拉選單 -->
-      <n-dropdown
-        :options="sortOptions"
-        @select="handleSortSelect"
-      >
-        <button class="sort-btn">
-          <n-icon :component="SwapVerticalOutline" />
-          <span>{{ currentSortLabel }}</span>
-          <n-icon :component="ChevronDownOutline" size="14" />
-        </button>
-      </n-dropdown>
+      <div class="header-right">
+        <!-- 視圖切換按鈕 -->
+        <div class="view-toggle">
+          <button
+            class="view-btn"
+            :class="{ active: store.viewType === 'list' }"
+            title="列表視圖"
+            @click="setViewType('list')"
+          >
+            <n-icon :component="ListOutline" size="18" />
+          </button>
+          <button
+            class="view-btn"
+            :class="{ active: store.viewType === 'calendar' }"
+            title="日曆視圖"
+            @click="setViewType('calendar')"
+          >
+            <n-icon :component="CalendarOutline" size="18" />
+          </button>
+        </div>
+
+        <!-- 排序下拉選單（僅列表視圖顯示） -->
+        <n-dropdown
+          v-if="store.viewType === 'list'"
+          :options="sortOptions"
+          @select="handleSortSelect"
+        >
+          <button class="sort-btn">
+            <n-icon :component="SwapVerticalOutline" />
+            <span>{{ currentSortLabel }}</span>
+            <n-icon :component="ChevronDownOutline" size="14" />
+          </button>
+        </n-dropdown>
+      </div>
     </header>
 
-    <!-- 待辦清單 -->
-    <div class="todo-container">
+    <!-- 待辦清單（列表視圖） -->
+    <div v-if="store.viewType === 'list'" class="todo-container">
       <n-scrollbar>
         <TodoList />
       </n-scrollbar>
     </div>
 
-    <!-- 新增待辦輸入框 -->
-    <TodoInput />
+    <!-- 日曆視圖 -->
+    <div v-else class="calendar-container">
+      <n-scrollbar>
+        <CalendarView />
+      </n-scrollbar>
+    </div>
+
+    <!-- 新增待辦輸入框（僅列表視圖顯示） -->
+    <TodoInput v-if="store.viewType === 'list'" />
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, h } from 'vue';
 import { NDropdown, NIcon, NScrollbar } from 'naive-ui';
-import { SwapVerticalOutline, ChevronDownOutline, MenuOutline, CheckmarkOutline } from '@vicons/ionicons5';
-import { useTodoStore, SMART_LIST, type SortType } from '../stores/todoStore';
+import { SwapVerticalOutline, ChevronDownOutline, MenuOutline, CheckmarkOutline, ListOutline, CalendarOutline } from '@vicons/ionicons5';
+import { useTodoStore, SMART_LIST, type SortType, type ViewType } from '../stores/todoStore';
 import TodoList from './TodoList.vue';
 import TodoInput from './TodoInput.vue';
+import CalendarView from './CalendarView.vue';
 
 const store = useTodoStore();
 
@@ -95,6 +126,11 @@ const currentSortLabel = computed(() => {
 // 處理排序選擇
 function handleSortSelect(key: string) {
   store.setSortType(key as SortType);
+}
+
+// 設定視圖類型
+function setViewType(type: ViewType) {
+  store.setViewType(type);
 }
 </script>
 
@@ -178,5 +214,52 @@ function handleSortSelect(key: string) {
 
 .todo-container :deep(.n-scrollbar-content) {
   padding: 0 var(--spacing-xl);
+}
+
+/* 標題右側區域 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  -webkit-app-region: no-drag;
+}
+
+/* 視圖切換按鈕組 */
+.view-toggle {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.view-btn:hover {
+  color: var(--text-secondary);
+}
+
+.view-btn.active {
+  background-color: var(--bg-elevated);
+  color: var(--accent);
+}
+
+/* 日曆容器 */
+.calendar-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.calendar-container :deep(.n-scrollbar-content) {
+  height: 100%;
 }
 </style>
