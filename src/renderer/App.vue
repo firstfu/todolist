@@ -3,7 +3,7 @@
   包含側邊欄與主面板的佈局，支援側邊欄顯示/隱藏
 -->
 <template>
-  <n-config-provider :theme="darkTheme" :theme-overrides="themeOverrides">
+  <n-config-provider :theme="darkTheme" :theme-overrides="themeOverrides" :locale="zhTW" :date-locale="dateZhTW">
     <n-message-provider>
       <n-dialog-provider>
         <div class="app-container">
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { darkTheme, type GlobalThemeOverrides } from 'naive-ui';
+import { darkTheme, zhTW, dateZhTW, type GlobalThemeOverrides } from 'naive-ui';
 import Sidebar from './components/Sidebar.vue';
 import MainPanel from './components/MainPanel.vue';
 import { useTodoStore } from './stores/todoStore';
