@@ -18,8 +18,8 @@ const store = new TodoStore();
 const createWindow = () => {
   // 建立瀏覽器視窗
   const mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 700,
+    width: 1200,
+    height: 750,
     minWidth: 800,
     minHeight: 500,
     frame: false, // 無邊框視窗
