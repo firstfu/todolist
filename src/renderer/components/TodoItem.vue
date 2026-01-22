@@ -98,62 +98,105 @@
     </div>
 
     <!-- 子任務列表（展開時顯示，可新增子任務） -->
-    <Transition name="slide">
-      <div v-if="isExpanded" class="children-list">
-        <div
-          v-for="child in todo.children"
-          :key="child.id"
-          class="todo-item child-item"
-          :class="{ completed: child.completed }"
-        >
-          <span class="child-indent"></span>
-
-          <!-- Checkbox -->
-          <button
-            class="checkbox"
-            :class="{ checked: child.completed }"
-            @click="toggleChildComplete(child)"
-          >
-            <span v-if="child.completed" class="checkmark">
-              <n-icon :component="CheckmarkOutline" size="14" />
-            </span>
-          </button>
-
-          <!-- 標題 -->
-          <div class="todo-content" @dblclick="startChildEdit(child)">
-            <input
-              v-if="editingChildId === child.id"
-              ref="editChildInputRef"
-              v-model="editingChildTitle"
-              class="edit-input"
-              @blur="finishChildEdit"
-              @keyup.enter="finishChildEdit"
-              @keyup.escape="cancelChildEdit"
-            />
-            <span v-else class="todo-title" :class="{ completed: child.completed }">
-              {{ child.title }}
+    <Transition name="children-expand">
+      <div v-if="isExpanded" class="children-container">
+        <!-- 進度指示器 -->
+        <div class="children-header">
+          <div class="progress-section">
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                :style="{ width: childrenProgress + '%' }"
+              ></div>
+            </div>
+            <span class="progress-text">
+              {{ completedChildrenCount }}/{{ todo.children.length }} 完成
             </span>
           </div>
-
-          <!-- 刪除按鈕 -->
-          <button class="delete-btn" @click="handleChildDelete(child)">
-            <n-icon :component="TrashOutline" size="14" />
-          </button>
+          <div class="connector-line"></div>
         </div>
+
+        <!-- 子任務列表 -->
+        <TransitionGroup name="child-item" tag="div" class="children-list">
+          <div
+            v-for="(child, index) in todo.children"
+            :key="child.id"
+            class="child-item"
+            :class="{
+              completed: child.completed,
+              'just-completed': recentlyCompleted === child.id
+            }"
+            :style="{ '--item-index': index }"
+          >
+            <!-- 連接線裝飾 -->
+            <div class="child-connector">
+              <div class="connector-dot"></div>
+            </div>
+
+            <!-- 子任務 Checkbox -->
+            <button
+              class="child-checkbox"
+              :class="{ checked: child.completed }"
+              @click="toggleChildComplete(child)"
+            >
+              <span class="checkbox-inner">
+                <svg v-if="child.completed" class="check-icon" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M5 12l5 5L20 7"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
+
+            <!-- 子任務內容 -->
+            <div class="child-content" @dblclick="startChildEdit(child)">
+              <input
+                v-if="editingChildId === child.id"
+                ref="editChildInputRef"
+                v-model="editingChildTitle"
+                class="child-edit-input"
+                @blur="finishChildEdit"
+                @keyup.enter="finishChildEdit"
+                @keyup.escape="cancelChildEdit"
+              />
+              <span v-else class="child-title" :class="{ completed: child.completed }">
+                {{ child.title }}
+              </span>
+            </div>
+
+            <!-- 刪除按鈕 -->
+            <button class="child-delete-btn" @click="handleChildDelete(child)">
+              <n-icon :component="CloseOutline" size="12" />
+            </button>
+          </div>
+        </TransitionGroup>
 
         <!-- 空狀態提示 -->
         <div v-if="!hasChildren" class="empty-children">
-          <span>尚無子任務</span>
+          <div class="empty-icon">
+            <n-icon :component="LayersOutline" size="28" />
+          </div>
+          <span class="empty-text">尚無子任務</span>
+          <span class="empty-hint">在下方輸入框新增子任務</span>
         </div>
 
-        <!-- 新增子任務 -->
-        <div class="add-child-wrapper">
+        <!-- 新增子任務區塊 -->
+        <div class="add-child-section">
+          <div class="add-child-icon">
+            <n-icon :component="AddOutline" size="14" />
+          </div>
           <input
             ref="addChildInputRef"
             v-model="newChildTitle"
             class="add-child-input"
-            placeholder="+ 新增子任務..."
+            placeholder="新增子任務..."
             @keyup.enter="addChild"
+            @focus="addChildFocused = true"
+            @blur="addChildFocused = false"
           />
         </div>
       </div>
@@ -171,6 +214,9 @@ import {
   TrashOutline,
   CalendarOutline,
   ReorderTwoOutline,
+  AddOutline,
+  CloseOutline,
+  LayersOutline,
 } from '@vicons/ionicons5';
 import { useTodoStore, formatDueDate, formatCreatedAt } from '../stores/todoStore';
 import type { Todo, SubTodo } from '../types/electron';
@@ -196,6 +242,8 @@ const editChildInputRef = ref<HTMLInputElement | null>(null);
 // 新增子任務
 const newChildTitle = ref('');
 const addChildInputRef = ref<HTMLInputElement | null>(null);
+const addChildFocused = ref(false);
+const recentlyCompleted = ref<string | null>(null);
 
 // 日期選擇器
 const showDatePicker = ref(false);
@@ -209,6 +257,11 @@ const hasChildren = computed(() => props.todo.children.length > 0);
 const isExpanded = computed(() => store.isExpanded(props.todo.id));
 const completedChildrenCount = computed(() =>
   props.todo.children.filter(c => c.completed).length
+);
+const childrenProgress = computed(() =>
+  props.todo.children.length > 0
+    ? (completedChildrenCount.value / props.todo.children.length) * 100
+    : 0
 );
 const dueDateInfo = computed(() => formatDueDate(props.todo.dueDate));
 const createdAtText = computed(() => formatCreatedAt(props.todo.createdAt));
@@ -296,9 +349,17 @@ function handleDelete() {
 
 // 切換子任務完成狀態
 async function toggleChildComplete(child: SubTodo) {
+  const wasCompleted = child.completed;
   await store.updateTodo(child.id, {
     completed: !child.completed,
   });
+  // 顯示完成動畫
+  if (!wasCompleted) {
+    recentlyCompleted.value = child.id;
+    setTimeout(() => {
+      recentlyCompleted.value = null;
+    }, 600);
+  }
 }
 
 // 開始編輯子任務
@@ -358,8 +419,7 @@ async function addChild() {
 }
 
 .todo-item:hover {
-  box-shadow: inset 3px 0 0 var(--accent),
-              0 0 20px var(--hover-glow);
+  background-color: var(--bg-elevated);
 }
 
 .todo-item.expanded {
@@ -556,93 +616,427 @@ async function addChild() {
   background-color: rgba(248, 81, 73, 0.1);
 }
 
-/* 子任務列表 */
-.children-list {
-  background-color: var(--bg-surface);
-  border-top: 1px solid var(--border);
-  border-bottom-left-radius: var(--radius-md);
-  border-bottom-right-radius: var(--radius-md);
-  padding: var(--spacing-sm);
-  padding-left: 60px;
+/* ========================================
+   子任務容器 - 精緻巢狀卡片設計
+   ======================================== */
+.children-container {
+  position: relative;
+  margin-top: 2px;
+  margin-left: 42px;
+  margin-right: 8px;
+  padding: var(--spacing-md);
+  background: linear-gradient(
+    135deg,
+    rgba(46, 54, 64, 0.6) 0%,
+    rgba(36, 42, 51, 0.8) 100%
+  );
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border: 1px solid rgba(61, 69, 80, 0.5);
+  border-top: none;
+  backdrop-filter: blur(8px);
 }
 
+/* 左側裝飾邊線 */
+.children-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    var(--accent) 0%,
+    rgba(242, 184, 48, 0.3) 100%
+  );
+  border-radius: 0 0 0 var(--radius-lg);
+}
+
+/* 進度區塊 */
+.children-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(61, 69, 80, 0.4);
+}
+
+.progress-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.progress-bar {
+  flex: 1;
+  max-width: 120px;
+  height: 4px;
+  background-color: rgba(61, 69, 80, 0.6);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, #f7c95a 100%);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(242, 184, 48, 0.4);
+}
+
+.progress-text {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.connector-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+  margin-left: var(--spacing-md);
+}
+
+/* 子任務列表 */
+.children-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 單一子任務項目 */
 .child-item {
-  background-color: transparent;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(36, 42, 51, 0.5);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  gap: var(--spacing-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: child-fade-in 0.3s ease forwards;
+  animation-delay: calc(var(--item-index) * 50ms);
+  opacity: 0;
+}
+
+@keyframes child-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .child-item:hover {
-  background-color: var(--bg-elevated);
-  box-shadow: none;
-  opacity: 1;
+  background: rgba(46, 54, 64, 0.8);
+  border-color: rgba(242, 184, 48, 0.2);
+  transform: translateX(4px);
 }
 
-.child-item .checkbox {
+.child-item.completed {
+  opacity: 0.7;
+}
+
+.child-item.completed:hover {
+  opacity: 0.85;
+}
+
+/* 完成動畫效果 */
+.child-item.just-completed {
+  animation: complete-flash 0.6s ease;
+}
+
+@keyframes complete-flash {
+  0% {
+    background: rgba(242, 184, 48, 0.3);
+    box-shadow: 0 0 20px rgba(242, 184, 48, 0.4);
+  }
+  100% {
+    background: rgba(36, 42, 51, 0.5);
+    box-shadow: none;
+  }
+}
+
+/* 連接線裝飾 */
+.child-connector {
+  display: flex;
+  align-items: center;
   width: 16px;
-  height: 16px;
   min-width: 16px;
-  border-width: 1.5px;
 }
 
-.child-item .todo-title {
-  font-size: 12px;
+.connector-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.2s ease;
+}
+
+.child-item:hover .connector-dot {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(242, 184, 48, 0.5);
+}
+
+.child-item.completed .connector-dot {
+  background: var(--success);
+}
+
+/* 子任務 Checkbox */
+.child-checkbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.checkbox-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.child-checkbox:hover .checkbox-inner {
+  border-color: var(--accent);
+  background: rgba(242, 184, 48, 0.1);
+}
+
+.child-checkbox.checked .checkbox-inner {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.check-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--bg-deep);
+  stroke-dasharray: 24;
+  stroke-dashoffset: 0;
+  animation: check-draw 0.3s ease forwards;
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 子任務內容區 */
+.child-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.child-title {
+  display: block;
+  font-size: 13px;
   color: var(--text-secondary);
+  line-height: 1.4;
+  transition: all 0.2s ease;
 }
 
-.child-item .todo-title.completed {
+.child-title.completed {
   color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-muted);
 }
 
-.child-indent {
-  width: 8px;
-  min-width: 8px;
+.child-edit-input {
+  width: 100%;
+  padding: 4px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
 }
 
-.add-child-wrapper {
-  margin-top: var(--spacing-xs);
-  padding-left: 16px;
+/* 子任務刪除按鈕 */
+.child-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s ease;
+}
+
+.child-item:hover .child-delete-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.child-delete-btn:hover {
+  color: var(--danger);
+  background: rgba(248, 81, 73, 0.15);
+}
+
+/* 空狀態 */
+.empty-children {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg) var(--spacing-md);
+  gap: var(--spacing-xs);
+}
+
+.empty-icon {
+  color: var(--text-muted);
+  opacity: 0.5;
+  margin-bottom: var(--spacing-xs);
+}
+
+.empty-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.empty-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* 新增子任務區塊 */
+.add-child-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding: 10px 12px;
+  background: rgba(30, 35, 42, 0.5);
+  border: 1px dashed rgba(61, 69, 80, 0.6);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.add-child-section:focus-within {
+  border-color: var(--accent);
+  border-style: solid;
+  background: rgba(36, 42, 51, 0.7);
+  box-shadow: 0 0 0 3px rgba(242, 184, 48, 0.1);
+}
+
+.add-child-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.add-child-section:focus-within .add-child-icon {
+  color: var(--accent);
 }
 
 .add-child-input {
-  width: 100%;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: transparent;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
+  flex: 1;
+  padding: 0;
+  background: transparent;
+  border: none;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   outline: none;
-  transition: all var(--transition-fast);
 }
 
 .add-child-input::placeholder {
   color: var(--text-muted);
-  font-size: 12px;
+  opacity: 0.7;
 }
 
-.add-child-input:focus {
-  border-color: var(--accent);
-  border-style: solid;
-  background-color: var(--bg-elevated);
+/* 子任務列表動畫 */
+.child-item-enter-active {
+  animation: child-slide-in 0.3s ease;
 }
 
-.empty-children {
-  padding: var(--spacing-sm) var(--spacing-md);
-  color: var(--text-muted);
-  font-size: 12px;
-  text-align: center;
+.child-item-leave-active {
+  animation: child-slide-out 0.25s ease;
 }
 
-/* 展開動畫 */
-.slide-enter-active {
-  animation: slide-down 0.25s ease;
-  overflow: hidden;
+@keyframes child-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.slide-leave-active {
-  animation: slide-down 0.2s ease reverse;
-  overflow: hidden;
+@keyframes child-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+  }
+}
+
+/* 展開/收合動畫 */
+.children-expand-enter-active {
+  animation: expand-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+}
+
+.children-expand-leave-active {
+  animation: expand-out 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+}
+
+@keyframes expand-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.8);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+    max-height: 600px;
+  }
+}
+
+@keyframes expand-out {
+  from {
+    opacity: 1;
+    transform: scaleY(1);
+    max-height: 600px;
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0.8);
+    max-height: 0;
+  }
 }
 </style>
