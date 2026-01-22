@@ -308,11 +308,13 @@ function getCategoryName(categoryId: string): string {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
+  overflow: hidden;
 }
 
 .calendar-container {
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  flex-shrink: 0;
 }
 
 /* ========================================
@@ -324,8 +326,8 @@ function getCategoryName(categoryId: string): string {
   align-items: center;
   justify-content: flex-start;
   width: 100%;
-  min-height: 32px;
-  padding: 4px 2px;
+  min-height: 20px;
+  padding: 2px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -369,10 +371,10 @@ function getCategoryName(categoryId: string): string {
 /* 任務指示區域 */
 .todo-indicator-area {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
-  min-height: 20px;
+  gap: 3px;
+  min-height: 14px;
 }
 
 /* 任務指示點 */
@@ -385,11 +387,10 @@ function getCategoryName(categoryId: string): string {
 }
 
 .indicator-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   transition: all var(--transition-fast);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .indicator-dot.pending {
@@ -435,8 +436,7 @@ function getCategoryName(categoryId: string): string {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   overflow: hidden;
-  min-height: 200px;
-  max-height: 350px;
+  min-height: 120px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -444,7 +444,7 @@ function getCategoryName(categoryId: string): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-bottom: 1px solid var(--border);
   background-color: var(--bg-elevated);
 }
@@ -452,7 +452,7 @@ function getCategoryName(categoryId: string): string {
 .panel-header-left {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 /* 日期徽章 */
@@ -461,8 +461,8 @@ function getCategoryName(categoryId: string): string {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   background-color: var(--bg-deep);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
@@ -474,7 +474,7 @@ function getCategoryName(categoryId: string): string {
 }
 
 .date-badge .date-day {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
@@ -485,7 +485,7 @@ function getCategoryName(categoryId: string): string {
 }
 
 .date-badge .date-weekday {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -720,16 +720,16 @@ function getCategoryName(categoryId: string): string {
 }
 
 :deep(.n-calendar-header) {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 4px var(--spacing-md);
   border-bottom: 1px solid var(--border);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 4px;
 }
 
 :deep(.n-calendar-header__title) {
   color: var(--text-primary);
   font-family: var(--font-title);
   font-weight: 600;
-  font-size: 18px;
+  font-size: 15px;
 }
 
 :deep(.n-calendar-header__extra button) {
@@ -753,14 +753,14 @@ function getCategoryName(categoryId: string): string {
 /* 週標題 */
 :deep(.n-calendar-weekdays) {
   border: none;
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 0;
 }
 
 :deep(.n-calendar-weekdays__day) {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -790,8 +790,8 @@ function getCategoryName(categoryId: string): string {
   border: none !important;
   background-color: transparent !important;
   border-radius: 0;
-  padding: 8px 4px;
-  min-height: 85px;
+  padding: 4px 2px;
+  min-height: 50px;
   transition: all var(--transition-fast);
   cursor: pointer;
 }
@@ -802,12 +802,12 @@ function getCategoryName(categoryId: string): string {
 
 /* 日期數字 */
 :deep(.n-calendar-date__date) {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 6px;
-  width: 28px;
-  height: 28px;
+  margin-bottom: 2px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
