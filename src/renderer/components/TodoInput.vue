@@ -28,7 +28,7 @@
 
     <!-- 快捷鍵提示 -->
     <div class="shortcut-hint">
-      <kbd>Enter</kbd> 新增
+      <kbd>↵</kbd> 新增
     </div>
   </div>
 </template>
@@ -105,8 +105,7 @@ async function addTodo() {
 }
 
 .input-wrapper.focused {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--text-muted);
 }
 
 .input-icon {
