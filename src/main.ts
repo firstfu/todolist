@@ -25,11 +25,11 @@ const createWindow = () => {
     frame: false, // 無邊框視窗
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#0d1117',
-      symbolColor: '#7d8590',
+      color: '#272e38',
+      symbolColor: '#969da5',
       height: 36,
     },
-    backgroundColor: '#0d1117',
+    backgroundColor: '#272e38',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
