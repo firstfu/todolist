@@ -45,9 +45,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, h } from 'vue';
 import { NDropdown, NIcon, NScrollbar } from 'naive-ui';
-import { SwapVerticalOutline, ChevronDownOutline, MenuOutline } from '@vicons/ionicons5';
+import { SwapVerticalOutline, ChevronDownOutline, MenuOutline, CheckmarkOutline } from '@vicons/ionicons5';
 import { useTodoStore, SMART_LIST, type SortType } from '../stores/todoStore';
 import TodoList from './TodoList.vue';
 import TodoInput from './TodoInput.vue';
@@ -66,8 +66,8 @@ const panelTitle = computed(() => {
   return category?.name || '待辦事項';
 });
 
-// 排序選項
-const sortOptions = [
+// 排序選項基礎資料
+const sortOptionsBase = [
   { label: '自訂排序', key: 'custom' },
   { label: '到期日', key: 'dueDate' },
   { label: '建立時間（新→舊）', key: 'createdAt-desc' },
@@ -76,9 +76,19 @@ const sortOptions = [
   { label: '完成狀態', key: 'completed' },
 ];
 
+// 排序選項（帶有當前選擇標記）
+const sortOptions = computed(() => {
+  return sortOptionsBase.map(option => ({
+    ...option,
+    icon: option.key === store.sortType
+      ? () => h(NIcon, { component: CheckmarkOutline, color: '#f2b830' })
+      : undefined,
+  }));
+});
+
 // 當前排序標籤
 const currentSortLabel = computed(() => {
-  const option = sortOptions.find(o => o.key === store.sortType);
+  const option = sortOptionsBase.find(o => o.key === store.sortType);
   return option?.label || '排序';
 });
 
